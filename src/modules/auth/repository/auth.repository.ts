@@ -1,6 +1,7 @@
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
 import { User } from "src/modules/user/schema/user.schema";
+import { RegisterDto } from "../dto/register.dto";
 
 
 export class AuthRepository {
@@ -8,15 +9,21 @@ export class AuthRepository {
         @InjectModel(User.name) private readonly userModel: Model<User>,
     ){}
 
-    async register(user: User) {
-        const existingUser = await this.userModel.findOne({ email: user.email });
-
-        if (existingUser) {
-            throw new Error('User already exists');
+    async register(user: RegisterDto) {
+        try {
+            const newUser = await this.userModel.create(user)
+            return newUser
+        } catch (error) {
+            throw error
         }
+    }
 
-        const newUser = await this.userModel.create(user)
-
-        return newUser
+    async getUserByEmail(email: string){
+        try {
+            const user = await this.userModel.findOne({ email })
+            return user
+        } catch (error) {
+            throw error
+        }
     }
 }
