@@ -8,6 +8,8 @@ import { UserModule } from './modules/user/user.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './modules/auth/core/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/core/roles.guard';
+import { CategoryModule } from './modules/category/category.module';
+import { KardexModule } from './modules/kardex/kardex.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { RolesGuard } from './modules/auth/core/roles.guard';
     AuthModule,
     ProductModule,
     UserModule,
+    CategoryModule,
+    KardexModule,
   ],
   providers: [
     {provide: APP_GUARD, useClass: JwtAuthGuard},
