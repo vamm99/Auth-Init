@@ -29,9 +29,6 @@ export class Product {
     @Prop({ required: true })
     status: boolean;
 
-    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
-    user_id: mongoose.Types.ObjectId;
-
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true })
     category_id: mongoose.Types.ObjectId;
 

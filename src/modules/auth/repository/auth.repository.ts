@@ -1,6 +1,6 @@
 import { InjectModel } from "@nestjs/mongoose";
 import { Model } from "mongoose";
-import { User } from "src/modules/user/schema/user.schema";
+import { User } from "src/schemas/user.schema";
 import { RegisterDto } from "../dto/register.dto";
 
 

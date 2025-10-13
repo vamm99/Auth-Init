@@ -5,9 +5,6 @@ export type KardexDocument = HydratedDocument<Kardex>
 
 export class Kardex {
 
-    @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true })
-    product_id: mongoose.Types.ObjectId;
-    
     @Prop({ required: true })
     comment: string;
 
