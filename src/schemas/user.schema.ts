@@ -10,6 +10,14 @@ export enum UserRole {
     CUSTOMER = 'customer',
 }
 
+export enum typeDocument {
+    CC = 'cc',
+    CE = 'ce',
+    TI = 'ti',
+    NIT = 'nit',
+    passport = 'passport',
+}
+
 @Schema()
 export class User {
 
@@ -23,7 +31,7 @@ export class User {
     idNumber: string;
 
     @Prop({ required: true })
-    typeDocument: string;
+    typeDocument: typeDocument;
 
     @Prop({ required: true })
     phone: string;
