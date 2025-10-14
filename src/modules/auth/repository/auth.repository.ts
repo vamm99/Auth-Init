@@ -26,4 +26,13 @@ export class AuthRepository {
             throw error
         }
     }
+
+    async updatePassword(email: string, password: string){
+        try {
+            const updatedUser = await this.userModel.findOneAndUpdate({ email }, { password }, { new: true })
+            return updatedUser
+        } catch (error) {
+            throw error
+        }
+    }
 }

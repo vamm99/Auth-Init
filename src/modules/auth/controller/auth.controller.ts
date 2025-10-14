@@ -4,6 +4,8 @@ import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
 import { Public } from '../decorators/public.decorator';
 import { User } from '../decorators/user.decorator';
+import { ResetPasswordDto } from '../dto/resetPassword.dto';
+import { SubmitResetPasswordDto } from '../dto/submitResetPassword.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -21,9 +23,20 @@ export class AuthController {
     return this.authService.login(user)
   }
 
+  @Post('update-password')
+  async updatePassword(@Body() user:ResetPasswordDto){
+    return this.authService.updatePassword(user)
+  }
+
+  @Post('submit-reset-password-link')
+  async submitResetPasswordLink(@Body() data:SubmitResetPasswordDto){
+    return this.authService.submitResetPasswordLink(data.email)
+  }
+
   @Get('profile')
   async getProfile(@User() user){
     return user
   }
+
 }
 
