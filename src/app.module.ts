@@ -10,6 +10,10 @@ import { JwtAuthGuard } from './modules/auth/core/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/core/roles.guard';
 import { CategoryModule } from './modules/category/category.module';
 import { KardexModule } from './modules/kardex/kardex.module';
+import { SalesModule } from './modules/sales/sales.module';
+import { CartModule } from './modules/cart/cart.module';
+import { PaymentModule } from './modules/payment/payment.module';
+import { ReviewModule } from './modules/review/review.module';
 
 @Module({
   imports: [
@@ -28,6 +32,10 @@ import { KardexModule } from './modules/kardex/kardex.module';
     UserModule,
     CategoryModule,
     KardexModule,
+    SalesModule,
+    CartModule,
+    PaymentModule,
+    ReviewModule,
   ],
   providers: [
     {provide: APP_GUARD, useClass: JwtAuthGuard},
