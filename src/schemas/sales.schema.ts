@@ -1,4 +1,4 @@
-import { Prop, SchemaFactory } from "@nestjs/mongoose";
+import { Prop, SchemaFactory, Schema } from "@nestjs/mongoose";
 import mongoose from "mongoose";
 
 export type SalesDocument = mongoose.HydratedDocument<Sales>
@@ -8,6 +8,7 @@ export enum SalesStatus {
     COMPLETED = 'completed'
 }
 
+@Schema({ timestamps: true })
 export class Sales {
     
     products: mongoose.Types.Array<{ 
@@ -20,12 +21,6 @@ export class Sales {
 
     @Prop({ enum: SalesStatus, default: SalesStatus.PENDING })
     status: SalesStatus;
-
-    @Prop({ default: Date.now })
-    createdAt: Date;
-
-    @Prop({ default: Date.now })
-    updatedAt: Date;
 }
 
 export const SalesSchema = SchemaFactory.createForClass(Sales)

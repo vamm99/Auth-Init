@@ -1,4 +1,4 @@
-import { Prop, SchemaFactory } from "@nestjs/mongoose"
+import { Prop, SchemaFactory, Schema } from "@nestjs/mongoose"
 import mongoose from "mongoose"
 
 export type PaymentDocument = mongoose.HydratedDocument<Payment>
@@ -13,6 +13,7 @@ export enum PaymentMethod {
     PAYPAL = 'paypal'
 }
 
+@Schema({ timestamps: true })
 export class Payment {
     
     @Prop({ required: true, type: mongoose.Schema.Types.Array })
@@ -31,11 +32,6 @@ export class Payment {
     @Prop({ enum: PaymentStatus, default: PaymentStatus.PENDING })
     status: PaymentStatus;
 
-    @Prop({ default: Date.now })
-    createdAt: Date;
-
-    @Prop({ default: Date.now })
-    updatedAt: Date;
 }
 
 export const PaymentSchema = SchemaFactory.createForClass(Payment)

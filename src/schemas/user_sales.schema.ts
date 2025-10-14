@@ -1,8 +1,10 @@
-import { Prop, SchemaFactory } from "@nestjs/mongoose";
+import { Prop, SchemaFactory, Schema } from "@nestjs/mongoose";
 import mongoose from "mongoose";
+import mongoosePaginate from "mongoose-paginate-v2";
 
 export type UserSalesDocument = mongoose.HydratedDocument<UserSales>
 
+@Schema({ timestamps: true })
 export class UserSales {
     
     @Prop({ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true })
@@ -19,3 +21,5 @@ export class UserSales {
 }
 
 export const UserSalesSchema = SchemaFactory.createForClass(UserSales)
+
+UserSalesSchema.plugin(mongoosePaginate);

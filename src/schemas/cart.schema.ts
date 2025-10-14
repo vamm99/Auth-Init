@@ -1,4 +1,4 @@
-import { Prop, SchemaFactory } from "@nestjs/mongoose";
+import { Prop, SchemaFactory, Schema } from "@nestjs/mongoose";
 import mongoose from "mongoose";
 
 export enum CartStatus {
@@ -8,6 +8,7 @@ export enum CartStatus {
 
 export type CartDocument = mongoose.HydratedDocument<Cart>
 
+@Schema({ timestamps: true })
 export class Cart {
     
     @Prop({ required: true, type: mongoose.Schema.Types.Array})
@@ -24,11 +25,6 @@ export class Cart {
     @Prop({ enum: CartStatus, default: CartStatus.PENDING })
     status: CartStatus;
 
-    @Prop({ default: Date.now })
-    createdAt: Date;
-
-    @Prop({ default: Date.now })
-    updatedAt: Date;
 }
 
 export const CartSchema = SchemaFactory.createForClass(Cart)
