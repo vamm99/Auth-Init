@@ -14,6 +14,7 @@ import { SalesModule } from './modules/sales/sales.module';
 import { CartModule } from './modules/cart/cart.module';
 import { PaymentModule } from './modules/payment/payment.module';
 import { ReviewModule } from './modules/review/review.module';
+import { SeederModule } from './database/seeders/seeder.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { ReviewModule } from './modules/review/review.module';
     CartModule,
     PaymentModule,
     ReviewModule,
+    SeederModule,
   ],
   providers: [
     {provide: APP_GUARD, useClass: JwtAuthGuard},

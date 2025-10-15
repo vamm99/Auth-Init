@@ -20,8 +20,13 @@ export class ProductRepository {
         return newProduct
     }
 
-    async getAllProductsByUser(user_id: string, pagination: Pagination) {
+    async getAllProductsByUser(
+        user_id: string,
+        pagination: Pagination,
+        filters?: any
+    ) {
         const { page, limit } = pagination;
+
         const products = await this.userProductModel.paginate(
             { user_id },
             {
@@ -44,7 +49,7 @@ export class ProductRepository {
 
     async getAllProducts(pagination: Pagination) {
         const { page, limit } = pagination;
-      
+
         const products = await this.productModel.paginate(
           { status: true },
           {
@@ -58,10 +63,10 @@ export class ProductRepository {
             ],
           },
         );
-      
+
         return products;
     }
-      
+
 
     async getProductById(id: string) {
         const product = await this.productModel.findById(id).populate('category_id');

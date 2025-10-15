@@ -19,18 +19,69 @@ export class ProductService {
         };
     }
 
-    async getAllProductsByUser(user_id: string, pagination: Pagination): Promise<ApiResponse<Product[]>> {
+    async getAllProductsByUser(
+        user_id: string,
+        query: Pagination & {
+            search?: string;
+            category_id?: string;
+            status?: string;
+            minPrice?: string;
+            maxPrice?: string;
+        }
+    ): Promise<ApiResponse<Product[]>> {
+        const pagination = { page: query.page, limit: query.limit };
         const products = await this.productRepository.getAllProductsByUser(user_id, pagination);
-        const productList = products.docs.map((item: any) => item.product_id);
+
+        let productList = products.docs.map((item: any) => item.product_id);
+
+        // Aplicar filtros en el servicio después del populate
+        if (query.search) {
+            const searchRegex = new RegExp(query.search, 'i');
+            productList = productList.filter((product: any) =>
+                searchRegex.test(product.name)
+            );
+        }
+
+        if (query.category_id) {
+            productList = productList.filter((product: any) =>
+                product.category_id && product.category_id._id?.toString() === query.category_id
+            );
+        }
+
+        if (query.status !== undefined) {
+            productList = productList.filter((product: any) =>
+                product.status === (query.status === 'true')
+            );
+        }
+
+        if (query.minPrice) {
+            productList = productList.filter((product: any) =>
+                product.price >= parseFloat(query.minPrice!)
+            );
+        }
+
+        if (query.maxPrice) {
+            productList = productList.filter((product: any) =>
+                product.price <= parseFloat(query.maxPrice!)
+            );
+        }
+
+        // Aplicar paginación manual a los resultados filtrados
+        const total = productList.length;
+        const totalPages = Math.ceil(total / (query.limit || 10));
+        const startIndex = ((query.page || 1) - 1) * (query.limit || 10);
+        const endIndex = startIndex + (query.limit || 10);
+        const paginatedProducts = productList.slice(startIndex, endIndex);
+
         return {
             code: 200,
             message: 'Products fetched successfully',
-            data: productList,
+            data: paginatedProducts,
             meta: {
-                page: products.page!,
-                limit: products.limit!,
-                total: products.totalDocs!,
-                totalPages: products.totalPages!
+                page: query.page || 1,
+                limit: query.limit || 10,
+                total: total,
+                totalPages: totalPages
             }
         };
     }
@@ -47,7 +98,7 @@ export class ProductService {
                 total: products.totalDocs!,
                 totalPages: products.totalPages!
             }
-        }
+        };
     }
 
     async getProductById(id: string) {

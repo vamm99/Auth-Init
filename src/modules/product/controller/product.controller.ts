@@ -13,7 +13,7 @@ export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
   @Post('register')
-  @Roles('admin', 'seller')  
+  @Roles('admin', 'seller')
   async createProduct(@Body() product: RegisterDto, @User() user: ProfileDto) {
     return this.productService.createProduct(product, user._id);
   }
@@ -26,8 +26,17 @@ export class ProductController {
 
   @Roles('admin', 'seller')
   @Get('user')
-  async getAllProductsByUser(@Query() pagination: Pagination, @User() user: ProfileDto) {
-    return this.productService.getAllProductsByUser(user._id, pagination);
+  async getAllProductsByUser(
+    @Query() query: Pagination & {
+      search?: string;
+      category_id?: string;
+      status?: string;
+      minPrice?: string;
+      maxPrice?: string;
+    },
+    @User() user: ProfileDto
+  ) {
+    return this.productService.getAllProductsByUser(user._id, query);
   }
 
   @Roles('admin', 'seller')
