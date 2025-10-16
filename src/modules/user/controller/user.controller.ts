@@ -15,7 +15,7 @@ import { QueryUserDto } from '../dto/query-user.dto';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 
 @Controller('user')
-@Roles('admin') // Solo admin puede gestionar usuarios
+@Roles('admin', 'seller') // Solo admin puede gestionar usuarios
 export class UserController {
   constructor(private readonly userService: UserService) {}
 

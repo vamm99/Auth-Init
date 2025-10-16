@@ -113,8 +113,8 @@ export class AuthService {
         }
     }
 
-    async updatePassword(data: ResetPasswordDto): Promise<ApiResponse<ResetPasswordDto>>{
-        const existingUser = await this.authRepository.getUserByEmail(data.email)
+    async updatePassword(data: ResetPasswordDto, userId: string): Promise<ApiResponse<ResetPasswordDto>>{
+        const existingUser = await this.authRepository.getUserById(userId)
         if (!existingUser) {
             throw new NotFoundException('User not found')
         }
@@ -128,7 +128,25 @@ export class AuthService {
 
         return {
             code: 200,
-            message: 'Password reset successfully',
+            message: 'Password updated successfully',
+            data: updatedUser
+        }
+    }
+
+    async updateProfile(userId: string, profileData: any): Promise<ApiResponse<any>>{
+        const existingUser = await this.authRepository.getUserById(userId)
+        if (!existingUser) {
+            throw new NotFoundException('User not found')
+        }
+
+        const updatedUser = await this.authRepository.updateUser(userId, profileData)
+        if (!updatedUser) {
+            throw new InternalServerErrorException('Profile update failed')
+        }
+
+        return {
+            code: 200,
+            message: 'Profile updated successfully',
             data: updatedUser
         }
     }

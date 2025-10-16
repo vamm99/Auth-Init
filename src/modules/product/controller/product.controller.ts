@@ -52,7 +52,7 @@ export class ProductController {
   }
 
   @Roles('admin', 'seller')
-  @Put(':id')
+  @Put(':id/status')
   async changeStatusProduct(@Param('id') id: string, @Body() product: UpdateDto) {
     return this.productService.changeStatus(id, product.status!);
   }

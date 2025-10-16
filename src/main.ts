@@ -10,7 +10,14 @@ async function bootstrap() {
   app.enableCors({
     origin:'*'
   })
-  app.useGlobalPipes(new ValidationPipe())
+  app.useGlobalPipes(new ValidationPipe({
+    transform: true,
+    whitelist: true,
+    forbidNonWhitelisted: false,
+    transformOptions: {
+      enableImplicitConversion: true,
+    },
+  }))
   await app.listen(port!, () => console.log(`Application listening on port ${port}`));
 }
 bootstrap();

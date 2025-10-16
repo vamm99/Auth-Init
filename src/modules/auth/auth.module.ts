@@ -9,9 +9,13 @@ import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { NodemailerService } from 'src/util/email/nodemailer.service';
+import { MongooseModule } from '@nestjs/mongoose';
+import { User, UserSchema } from 'src/schemas/user.schema';
 
 @Module({
-  imports: [UserModule,
+  imports: [
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
+    UserModule,
     PassportModule,
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({

@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get } from '@nestjs/common';
+import { Controller, Post, Body, Get, Put } from '@nestjs/common';
 import { AuthService } from '../service/auth.service';
 import { RegisterDto } from '../dto/register.dto';
 import { LoginDto } from '../dto/login.dto';
@@ -24,8 +24,8 @@ export class AuthController {
   }
 
   @Post('update-password')
-  async updatePassword(@Body() user:ResetPasswordDto){
-    return this.authService.updatePassword(user)
+  async updatePassword(@Body() user:ResetPasswordDto, @User() currentUser){
+    return this.authService.updatePassword(user, currentUser._id)
   }
 
   @Post('submit-reset-password-link')
@@ -36,6 +36,11 @@ export class AuthController {
   @Get('profile')
   async getProfile(@User() user){
     return user
+  }
+
+  @Put('profile')
+  async updateProfile(@Body() profileData: any, @User() user){
+    return this.authService.updateProfile(user._id, profileData)
   }
 
 }

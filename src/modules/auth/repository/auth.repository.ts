@@ -27,9 +27,27 @@ export class AuthRepository {
         }
     }
 
+    async getUserById(id: string){
+        try {
+            const user = await this.userModel.findById(id)
+            return user
+        } catch (error) {
+            throw error
+        }
+    }
+
     async updatePassword(email: string, password: string){
         try {
             const updatedUser = await this.userModel.findOneAndUpdate({ email }, { password }, { new: true })
+            return updatedUser
+        } catch (error) {
+            throw error
+        }
+    }
+
+    async updateUser(id: string, userData: any){
+        try {
+            const updatedUser = await this.userModel.findByIdAndUpdate(id, userData, { new: true })
             return updatedUser
         } catch (error) {
             throw error

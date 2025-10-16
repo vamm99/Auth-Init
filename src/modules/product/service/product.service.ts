@@ -29,16 +29,22 @@ export class ProductService {
             maxPrice?: string;
         }
     ): Promise<ApiResponse<Product[]>> {
-        const pagination = { page: query.page, limit: query.limit };
+        // Si hay filtros, necesitamos obtener TODOS los productos para filtrar
+        const hasFilters = query.search || query.category_id || query.status !== undefined || query.minPrice || query.maxPrice;
+        
+        const pagination = hasFilters 
+            ? { page: 1, limit: 10000 } // Obtener todos si hay filtros
+            : { page: query.page, limit: query.limit }; // Paginación normal si no hay filtros
+        
         const products = await this.productRepository.getAllProductsByUser(user_id, pagination);
 
-        let productList = products.docs.map((item: any) => item.product_id);
+        let productList = products.docs.map((item: any) => item.product_id).filter((p: any) => p !== null);
 
         // Aplicar filtros en el servicio después del populate
         if (query.search) {
             const searchRegex = new RegExp(query.search, 'i');
             productList = productList.filter((product: any) =>
-                searchRegex.test(product.name)
+                searchRegex.test(product.name) || searchRegex.test(product.description)
             );
         }
 
@@ -66,12 +72,18 @@ export class ProductService {
             );
         }
 
-        // Aplicar paginación manual a los resultados filtrados
+        // Calcular totales después de filtrar
         const total = productList.length;
-        const totalPages = Math.ceil(total / (query.limit || 10));
-        const startIndex = ((query.page || 1) - 1) * (query.limit || 10);
-        const endIndex = startIndex + (query.limit || 10);
-        const paginatedProducts = productList.slice(startIndex, endIndex);
+        const limit = query.limit || 10;
+        const totalPages = Math.ceil(total / limit);
+        
+        // Aplicar paginación manual solo si hay filtros
+        let paginatedProducts = productList;
+        if (hasFilters) {
+            const startIndex = ((query.page || 1) - 1) * limit;
+            const endIndex = startIndex + limit;
+            paginatedProducts = productList.slice(startIndex, endIndex);
+        }
 
         return {
             code: 200,
@@ -79,9 +91,9 @@ export class ProductService {
             data: paginatedProducts,
             meta: {
                 page: query.page || 1,
-                limit: query.limit || 10,
-                total: total,
-                totalPages: totalPages
+                limit: limit,
+                total: hasFilters ? total : products.totalDocs || total,
+                totalPages: hasFilters ? totalPages : products.totalPages || totalPages
             }
         };
     }
