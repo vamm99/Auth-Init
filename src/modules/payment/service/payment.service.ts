@@ -25,7 +25,8 @@ export class PaymentService {
   ) {
     console.log('🛒 Iniciando creación de pago:', { products, total, payment_method, user_id });
     
-    // 1. Verificar stock y actualizar inventario
+    // Solo verificar que los productos existen, NO descontar stock
+    // El stock se descuenta en sales.service.ts cuando se crea la venta
     for (const item of products) {
       console.log(`📦 Verificando producto: ${item.product_id}`);
       const product = await this.productModel.findById(item.product_id);
@@ -37,26 +38,9 @@ export class PaymentService {
       if (product.stock < item.quantity) {
         throw new Error(`Stock insuficiente para ${product.name}. Disponible: ${product.stock}, Solicitado: ${item.quantity}`);
       }
-
-      // Actualizar stock del producto
-      const newStock = product.stock - item.quantity;
-      await this.productModel.findByIdAndUpdate(item.product_id, { stock: newStock });
-
-      // 2. Crear registro en Kardex
-      const kardex = await this.kardexModel.create({
-        comment: `Venta - Pago procesado`,
-        quantity: item.quantity,
-        stock: newStock,
-      });
-
-      // 3. Crear relación Product-Kardex
-      await this.productKardexModel.create({
-        product_id: item.product_id,
-        kardex_id: kardex._id,
-      });
     }
 
-    // 4. Crear el pago
+    // Crear el pago (sin modificar stock)
     console.log('💳 Creando registro de pago...');
     const payment = await this.paymentModel.create({
       products,
@@ -66,7 +50,7 @@ export class PaymentService {
     });
     console.log('✅ Pago creado:', payment._id);
 
-    // 5. Crear la relación usuario-pago
+    // Crear la relación usuario-pago
     console.log('🔗 Creando relación usuario-pago...');
     await this.userPaymentModel.create({
       user_id,
@@ -74,7 +58,7 @@ export class PaymentService {
     });
     console.log('✅ Relación usuario-pago creada');
 
-    console.log('🎉 Pago completado exitosamente');
+    console.log('🎉 Pago completado exitosamente (stock se descontará al crear la venta)');
     return {
       code: 201,
       message: 'Payment created successfully',

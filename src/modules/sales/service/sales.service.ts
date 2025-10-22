@@ -1,10 +1,13 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Types } from 'mongoose';
 import { SalesRepository } from '../repository/sales.repository';
 import { CreateSaleDto } from '../dto/create-sale.dto';
 import { Pagination } from 'src/type/pagination';
 import { ApiResponse, PaginationMeta } from 'src/type/type';
 import { Sales, SalesStatus } from 'src/schemas/sales.schema';
-import { Types } from 'mongoose';
+import { Kardex, KardexDocument } from 'src/schemas/kardex.schema';
+import { ProductKardex, ProductKardexDocument } from 'src/schemas/product_kardex.schema';
 import * as productInterface from '../../product/interfaces/product-service.interface';
 import { ProductInSale, SalesResponse } from 'src/type/sales';
 
@@ -28,7 +31,9 @@ export class SalesService {
   constructor(
     private readonly salesRepository: SalesRepository,
     @Inject('IProductService')
-    private readonly productService: productInterface.IProductService
+    private readonly productService: productInterface.IProductService,
+    @InjectModel(Kardex.name) private kardexModel: Model<KardexDocument>,
+    @InjectModel(ProductKardex.name) private productKardexModel: Model<ProductKardexDocument>
   ) {}
 
 
@@ -154,6 +159,16 @@ export class SalesService {
 
   private async updateProductStock(productId: string, quantityChange: number): Promise<void> {
     try {
+      // 1. Obtener el producto actual para saber el stock
+      const productResponse = await this.productService.getProductById(productId);
+      if (!productResponse || !productResponse.data) {
+        throw new Error(`Producto con ID ${productId} no encontrado`);
+      }
+      
+      const currentStock = productResponse.data.stock;
+      const newStock = currentStock - quantityChange;
+      
+      // 2. Actualizar el stock del producto
       const response = await this.productService.updateOne(
         { _id: new Types.ObjectId(productId) },
         { $inc: { stock: -quantityChange } }
@@ -167,6 +182,21 @@ export class SalesService {
       if (response.modifiedCount === 0) {
         throw new Error('No se pudo actualizar el stock del producto: el producto no fue encontrado o no hubo cambios');
       }
+      
+      // 3. Crear registro en Kardex
+      const kardex = await this.kardexModel.create({
+        comment: `Venta - Stock descontado`,
+        quantity: quantityChange,
+        stock: newStock,
+      });
+      
+      // 4. Crear relación Product-Kardex
+      await this.productKardexModel.create({
+        product_id: new Types.ObjectId(productId),
+        kardex_id: kardex._id,
+      });
+      
+      console.log(`✅ Stock actualizado y kardex creado para producto ${productId}: ${currentStock} -> ${newStock}`);
     } catch (error) {
       throw new Error(`Error actualizando stock del producto: ${error.message}`);
     }

@@ -299,4 +299,4 @@ El backend ahora:
 - ✅ Permite realizar compras completas
 - ✅ Guarda pagos y ventas correctamente
 
-**¡El marketplace está 100% funcional!** 🎉
+**¡El MonterPlace está 100% funcional!** 🎉

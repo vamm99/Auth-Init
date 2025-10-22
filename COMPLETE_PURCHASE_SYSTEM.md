@@ -297,7 +297,7 @@ npm run dev
 
 ### 3. Iniciar Frontend
 ```bash
-cd /home/victor/NextJs/marketplace
+cd /home/victor/NextJs/MonterPlace
 npm run dev
 ```
 
@@ -434,7 +434,7 @@ GET http://localhost:3000/product/:id
 
 ## 🎉 ¡Sistema Completo!
 
-El marketplace ahora tiene un sistema de compras completo que:
+El MonterPlace ahora tiene un sistema de compras completo que:
 - ✅ Procesa pagos
 - ✅ Actualiza inventario en tiempo real
 - ✅ Registra movimientos en Kardex
