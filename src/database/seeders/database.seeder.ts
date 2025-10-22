@@ -464,48 +464,53 @@ export class DatabaseSeeder {
   private async seedSales(users: any[], products: any[]) {
     const sellers = users.filter((u) => u.role === 'seller' || u.role === 'admin');
     const now = new Date();
-
+  
     for (const seller of sellers) {
       // Crear 10-15 ventas por seller
       const salesCount = Math.floor(Math.random() * 6) + 10;
-
+  
       for (let i = 0; i < salesCount; i++) {
         const daysAgo = Math.floor(Math.random() * 60) + 1;
         const saleDate = new Date(now);
         saleDate.setDate(saleDate.getDate() - daysAgo);
-
+  
         // Seleccionar 1-4 productos aleatorios
         const productsCount = Math.floor(Math.random() * 4) + 1;
         const selectedProducts: any[] = [];
         let total = 0;
-
+  
         for (let j = 0; j < productsCount; j++) {
           const randomProduct = products[Math.floor(Math.random() * products.length)];
           const quantity = Math.floor(Math.random() * 3) + 1;
           const price = randomProduct.price;
-
+  
           selectedProducts.push({
             product_id: randomProduct._id,
+            name: randomProduct.name,
             price: price,
             quantity: quantity,
           });
-
+  
           total += price * quantity;
         }
-
+  
         const status = Math.random() > 0.3 ? 'completed' : 'pending';
-
+  
         const sale = await this.salesModel.create({
+          user_id: seller._id,
           products: selectedProducts,
           total: total,
           status: status,
           createdAt: saleDate,
+          updatedAt: saleDate,
         });
-
+  
+        // Crear relación usuario-venta
         await this.userSalesModel.create({
           user_id: seller._id,
-          sales_id: sale._id,
+          sales_id: sale._id,  // Cambiado de sale_id a sales_id
           createdAt: saleDate,
+          updatedAt: saleDate,
         });
       }
     }

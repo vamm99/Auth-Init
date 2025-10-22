@@ -98,17 +98,72 @@ export class ProductService {
         };
     }
 
-    async getAllProducts(pagination: Pagination): Promise<ApiResponse<Product[]>> {
+    async getAllProducts(
+        query: Pagination & {
+            search?: string;
+            category_id?: string;
+            minPrice?: string;
+            maxPrice?: string;
+        }
+    ): Promise<ApiResponse<Product[]>> {
+        // Si hay filtros, necesitamos obtener TODOS los productos para filtrar
+        const hasFilters = query.search || query.category_id || query.minPrice || query.maxPrice;
+        
+        const pagination = hasFilters 
+            ? { page: 1, limit: 10000 } // Obtener todos si hay filtros
+            : { page: query.page, limit: query.limit }; // Paginación normal si no hay filtros
+        
         const products = await this.productRepository.getAllProducts(pagination);
+        let productList = products.docs;
+
+        // Aplicar filtros
+        if (query.search) {
+            const searchRegex = new RegExp(query.search, 'i');
+            productList = productList.filter((product: any) =>
+                searchRegex.test(product.name) || searchRegex.test(product.description)
+            );
+        }
+
+        if (query.category_id) {
+            productList = productList.filter((product: any) =>
+                product.category_id && product.category_id._id?.toString() === query.category_id
+            );
+        }
+
+        if (query.minPrice) {
+            productList = productList.filter((product: any) =>
+                product.price >= parseFloat(query.minPrice!)
+            );
+        }
+
+        if (query.maxPrice) {
+            productList = productList.filter((product: any) =>
+                product.price <= parseFloat(query.maxPrice!)
+            );
+        }
+
+        // Calcular totales después de filtrar
+        const total = productList.length;
+        const limit = query.limit || 12;
+        const totalPages = Math.ceil(total / limit);
+        
+        // Aplicar paginación manual solo si hay filtros
+        let paginatedProducts = productList;
+        if (hasFilters) {
+            const startIndex = ((query.page || 1) - 1) * limit;
+            const endIndex = startIndex + limit;
+            paginatedProducts = productList.slice(startIndex, endIndex);
+        }
+
         return {
             code: 200,
             message: 'Products fetched successfully',
-            data: products.docs,
+            data: paginatedProducts,
             meta: {
-                page: products.page!,
-                limit: products.limit!,
-                total: products.totalDocs!,
-                totalPages: products.totalPages!
+                page: query.page || 1,
+                limit: limit,
+                total: hasFilters ? total : products.totalDocs || total,
+                totalPages: hasFilters ? totalPages : products.totalPages || totalPages
             }
         };
     }
@@ -137,6 +192,16 @@ export class ProductService {
             code: 200,
             message: 'Product status updated successfully',
             data: updatedProduct
+        };
+    }
+
+    async updateOne(filter: any, update: any) {
+        const result = await this.productRepository.updateOne(filter, update);
+        return {
+            code: 200,
+            message: result.success ? 'Product updated successfully' : 'No changes made to the product',
+            data: result.data,
+            modifiedCount: result.modifiedCount
         };
     }
 }

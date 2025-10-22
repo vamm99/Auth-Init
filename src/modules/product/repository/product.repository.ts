@@ -32,6 +32,7 @@ export class ProductRepository {
             {
               page,
               limit,
+              sort: { createdAt: -1 },
               populate: [
                 {
                   path: "product_id",
@@ -51,7 +52,10 @@ export class ProductRepository {
         const { page, limit } = pagination;
 
         const products = await this.productModel.paginate(
-          { status: true },
+          { 
+            status: true,
+            stock: { $gte: 1 },
+           },
           {
             page,
             limit,
@@ -67,16 +71,25 @@ export class ProductRepository {
         return products;
     }
 
-
     async getProductById(id: string) {
         const product = await this.productModel.findById(id).populate('category_id');
         return product;
     }
 
-    async updateProduct(id: string, product: UpdateDto) {
-        const updatedProduct = await this.productModel.findByIdAndUpdate(id, product, { new: true }).populate('category_id');
-        return updatedProduct;
-    }
+    async updateProduct(id: string, updateData: UpdateDto) {
+    return this.productModel.findByIdAndUpdate(id, updateData, { new: true });
+  }
+
+  async updateOne(filter: any, update: any) {
+    const result = await this.productModel.updateOne(filter, update);
+    // Get the updated document
+    const updatedDoc = await this.productModel.findOne(filter);
+    return {
+      success: result.modifiedCount > 0,
+      data: updatedDoc,
+      modifiedCount: result.modifiedCount
+    };
+  }
 
     async changeStatus(id: string, status: boolean) {
         const product = await this.productModel.findByIdAndUpdate(id, { status }, { new: true }).populate('category_id');

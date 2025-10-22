@@ -1,4 +1,4 @@
-import { IsBoolean, IsNumber, IsString } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsNumber, IsString } from "class-validator";
 
 export class UpdateDto {
     @IsString()
@@ -26,6 +26,12 @@ export class UpdateDto {
     status?: boolean;
 
     @IsString()
-    category_id?: string;
+    category_id?:any;
+}
+
+export class changeStatus {
+    @IsBoolean()
+    @IsNotEmpty()
+    status: boolean;
 }
     

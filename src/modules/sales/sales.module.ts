@@ -5,6 +5,8 @@ import { SalesController } from './controller/sales.controller';
 import { SalesRepository } from './repository/sales.repository';
 import { Sales, SalesSchema } from 'src/schemas/sales.schema';
 import { UserSales, UserSalesSchema } from 'src/schemas/user_sales.schema';
+import { ProductModule } from '../product/product.module';
+import * as mongoosePaginate from 'mongoose-paginate-v2';
 
 @Module({
   imports: [
@@ -12,6 +14,7 @@ import { UserSales, UserSalesSchema } from 'src/schemas/user_sales.schema';
       { name: Sales.name, schema: SalesSchema },
       { name: UserSales.name, schema: UserSalesSchema },
     ]),
+    ProductModule, // Importar el módulo de productos
   ],
   controllers: [SalesController],
   providers: [SalesService, SalesRepository],
