@@ -31,8 +31,25 @@ export class SalesController {
 
   @Get('user')
   @Roles('admin', 'seller', 'buyer', 'customer')
-  async getUserSales(@User() user: ProfileDto) {
-    return this.salesService.getUserSales(user._id);
+  async getUserSales(
+    @User() user: ProfileDto,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    const pagination = {
+      page: parseInt(page || '1'),
+      limit: parseInt(limit || '10'),
+    };
+
+    const filters: any = {};
+    if (status) filters.status = status;
+    if (startDate) filters.startDate = new Date(startDate);
+    if (endDate) filters.endDate = new Date(endDate);
+
+    return this.salesService.getSalesByUser(user._id, pagination, filters);
   }
 
   @Get('export')

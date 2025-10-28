@@ -332,7 +332,17 @@ async getUserSales(user_id: string): Promise<ApiResponse<Sales[]>> {
       };
     } catch (error) {
       console.error('Error obteniendo ventas:', error);
-      throw new Error(`Error al obtener las ventas: ${error.message}`);
+      return {
+        code: 500,
+        message: `Error al obtener las ventas: ${error.message}`,
+        data: [],
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 0,
+          totalPages: 0,
+        } as PaginationMeta,
+      };
     }
   }
 
