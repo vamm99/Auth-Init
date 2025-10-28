@@ -423,6 +423,24 @@ async getUserSales(user_id: string): Promise<ApiResponse<Sales[]>> {
     }
   }
 
+  async updateSaleStatus(sale_id: string, status: string): Promise<ApiResponse<Sales>> {
+    try {
+      const sale = await this.salesRepository.updateSaleStatus(sale_id, status as SalesStatus);
+      if (!sale) {
+        throw new Error('Venta no encontrada');
+      }
+      
+      return {
+        code: 200,
+        message: 'Estado de venta actualizado exitosamente',
+        data: sale,
+      };
+    } catch (error) {
+      console.error('Error actualizando estado de venta:', error);
+      throw new Error(`Error al actualizar el estado de la venta: ${error.message}`);
+    }
+  }
+
   // In sales.repository.ts, update the getSalesForExport method:
   async getSalesForExport(
     userId: string,

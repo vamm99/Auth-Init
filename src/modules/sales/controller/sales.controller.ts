@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Res, Query } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Res, Query, Put } from '@nestjs/common';
 import { SalesService } from '../service/sales.service';
 import { Roles } from 'src/modules/auth/decorators/roles.decorator';
 import { User } from 'src/modules/auth/decorators/user.decorator';
@@ -91,6 +91,15 @@ export class SalesController {
   @Roles('admin', 'seller', 'buyer', 'customer')
   async getSaleById(@Param('id') id: string) {
     return this.salesService.getSaleById(id);
+  }
+
+  @Put(':id/status')
+  @Roles('admin', 'seller')
+  async updateSaleStatus(
+    @Param('id') id: string,
+    @Body() body: { status: string }
+  ) {
+    return this.salesService.updateSaleStatus(id, body.status);
   }
 }
 
