@@ -1,0 +1,17 @@
+# Agrega esta línea a tu archivo .env
+
+JWT_SECRET=tu-secreto-super-seguro-aqui-cambiar-en-produccion
+
+# Tu .env debería verse así:
+
+PORT=3001
+MONGO_URL=mongodb://admin:victor2429@ec2-3-129-87-63.us-east-2.compute.amazonaws.com:27017/admin
+JWT_SECRET=tu-secreto-super-seguro-aqui-cambiar-en-produccion
+
+RESEND_API_KEY=re_Q5cPuu6B_6uejdBfrWG7WyYRUiceMwEC7
+
+# NODEMAILER
+NODEMAILER_SERVICE=gmail
+NODEMAILER_PORT=465
+NODEMAILER_USER=monterplace@gmail.com
+NODEMAILER_PASS=xtfjauuopoumcfez

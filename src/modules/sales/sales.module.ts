@@ -5,6 +5,7 @@ import { SalesController } from './controller/sales.controller';
 import { SalesRepository } from './repository/sales.repository';
 import { Sales, SalesSchema } from 'src/schemas/sales.schema';
 import { UserSales, UserSalesSchema } from 'src/schemas/user_sales.schema';
+import { UserProduct, UserProductSchema } from 'src/schemas/user_product.schema';
 import { Kardex, KardexSchema } from 'src/schemas/kardex.schema';
 import { ProductKardex, ProductKardexSchema } from 'src/schemas/product_kardex.schema';
 import { ProductModule } from '../product/product.module';
@@ -15,6 +16,7 @@ import * as mongoosePaginate from 'mongoose-paginate-v2';
     MongooseModule.forFeature([
       { name: Sales.name, schema: SalesSchema },
       { name: UserSales.name, schema: UserSalesSchema },
+      { name: UserProduct.name, schema: UserProductSchema },
       { name: Kardex.name, schema: KardexSchema },
       { name: ProductKardex.name, schema: ProductKardexSchema },
     ]),

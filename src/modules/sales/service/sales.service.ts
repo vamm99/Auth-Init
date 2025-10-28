@@ -8,6 +8,7 @@ import { ApiResponse, PaginationMeta } from 'src/type/type';
 import { Sales, SalesStatus } from 'src/schemas/sales.schema';
 import { Kardex, KardexDocument } from 'src/schemas/kardex.schema';
 import { ProductKardex, ProductKardexDocument } from 'src/schemas/product_kardex.schema';
+import { UserProduct, UserProductDocument } from 'src/schemas/user_product.schema';
 import * as productInterface from '../../product/interfaces/product-service.interface';
 import { ProductInSale, SalesResponse } from 'src/type/sales';
 
@@ -33,7 +34,8 @@ export class SalesService {
     @Inject('IProductService')
     private readonly productService: productInterface.IProductService,
     @InjectModel(Kardex.name) private kardexModel: Model<KardexDocument>,
-    @InjectModel(ProductKardex.name) private productKardexModel: Model<ProductKardexDocument>
+    @InjectModel(ProductKardex.name) private productKardexModel: Model<ProductKardexDocument>,
+    @InjectModel(UserProduct.name) private userProductModel: Model<UserProductDocument>
   ) {}
 
 
@@ -41,17 +43,19 @@ export class SalesService {
     products: ProductSaleInput[],
     total: number,
     payment_id: string,
-    user_id: string
+    buyer_id: string  // Este es el ID del customer que compra
   ): Promise<ApiResponse<SalesResponse>> {
     try {
-      console.log('Iniciando creación de venta para usuario:', user_id);
+      console.log('Iniciando creación de venta. Comprador (customer):', buyer_id);
       
-      // Validate products and get product details (including name and image)
+      // 1. Validar stock de todos los productos
+      await Promise.all(
+        products.map(item => this.validateProductStock(item.product_id, item.quantity))
+      );
+
+      // 2. Obtener detalles completos de los productos
       const productDetails = await Promise.all(
         products.map(async (item) => {
-          await this.validateProductStock(item.product_id, item.quantity);
-          
-          // Get full product details
           const response = await this.productService.getProductById(item.product_id);
           if (!response || !response.data) {
             throw new Error(`Producto con ID ${item.product_id} no encontrado`);
@@ -66,66 +70,76 @@ export class SalesService {
           };
         })
       );
-  
-      const saleData: CreateSaleDto = {
-        products: productDetails,
-        total,
-        payment_id,
-        status: SalesStatus.PENDING,
-        user_id
-      };
-  
-      console.log('Datos de la venta a crear:', JSON.stringify(saleData, null, 2));
-      
-      const newSale = await this.salesRepository.createSale(saleData, user_id);
-      
-      if (!newSale) {
-        throw new Error('No se pudo crear la venta: respuesta vacía del repositorio');
+
+      // 3. Agrupar productos por vendedor (seller/admin)
+      const productsBySeller = await this.groupProductsBySeller(productDetails);
+
+      // 4. Crear una venta por cada vendedor
+      const createdSales: SalesResponse[] = [];
+
+      for (const [sellerId, sellerProducts] of productsBySeller.entries()) {
+        const sellerTotal = sellerProducts.reduce((sum, p) => sum + (p.price * p.quantity), 0);
+
+        console.log(`Creando venta para vendedor ${sellerId} con ${sellerProducts.length} producto(s), total: $${sellerTotal}`);
+
+        const saleData: CreateSaleDto = {
+          products: sellerProducts,
+          total: sellerTotal,
+          payment_id,
+          status: SalesStatus.PENDING,
+          user_id: sellerId  // ← IMPORTANTE: user_id es el SELLER, no el buyer
+        };
+
+        // Crear la venta asociada al vendedor
+        const newSale = await this.salesRepository.createSale(saleData, sellerId);
+
+        if (!newSale) {
+          throw new Error(`No se pudo crear la venta para el vendedor ${sellerId}`);
+        }
+
+        // Convertir a response
+        const saleObj = newSale.toObject ? newSale.toObject() : newSale;
+        const saleResponse: SalesResponse = {
+          _id: saleObj._id.toString(),
+          products: saleObj.products.map((p: any) => ({
+            product_id: p.product_id,
+            name: p.name,
+            price: p.price,
+            quantity: p.quantity,
+            image_url: p.image_url || ''
+          })),
+          total: saleObj.total,
+          user_id: saleObj.user_id.toString(),
+          status: saleObj.status,
+          orderNumber: saleObj.orderNumber,
+          payment_id: saleObj.payment_id,
+          createdAt: saleObj.createdAt,
+          updatedAt: saleObj.updatedAt
+        };
+
+        createdSales.push(saleResponse);
       }
-      
-      console.log('Venta creada exitosamente, actualizando stock...');
-      
-      // Update product stock after successful sale
+
+      // 5. Actualizar stock de todos los productos
+      console.log('Actualizando stock de productos...');
       await Promise.all(
-        products.map(item => 
+        productDetails.map(item => 
           this.updateProductStock(item.product_id, item.quantity)
         )
       );
-      
-      console.log('Transacción completada exitosamente');
-      
-      // Convert the newSale document to a plain response
-      // The repository already returns a populated document from getSaleById
-      const saleObj = newSale.toObject ? newSale.toObject() : newSale;
-      
-      // Simple conversion - just convert _id fields to strings
-      const responseData: SalesResponse = {
-        _id: saleObj._id.toString(),
-        products: saleObj.products.map((p: any) => ({
-          product_id: p.product_id, // Keep as is
-          name: p.name,
-          price: p.price,
-          quantity: p.quantity,
-          image_url: p.image_url || ''
-        })),
-        total: saleObj.total,
-        user_id: saleObj.user_id.toString(),
-        status: saleObj.status,
-        orderNumber: saleObj.orderNumber,
-        payment_id: saleObj.payment_id,
-        createdAt: saleObj.createdAt,
-        updatedAt: saleObj.updatedAt
-      };
-      
+
+      console.log(`✅ Transacción completada: ${createdSales.length} venta(s) creada(s)`);
+
+      // 6. Retornar la primera venta (o podrías retornar todas)
+      // Si hay múltiples vendedores, retorna la primera venta
       return {
         code: 201,
-        message: 'Venta creada exitosamente',
-        data: responseData
+        message: `Venta creada exitosamente. ${createdSales.length} venta(s) generada(s) para ${createdSales.length} vendedor(es)`,
+        data: createdSales[0]  // Retorna la primera venta
       };
     } catch (error) {
-      console.error('Error en createSale:', error);
+      console.error('❌ Error en createSale:', error);
       
-      // Log detailed error information
       if (error.name === 'ValidationError') {
         console.error('Error de validación:', error.errors);
       } else if (error.code === 11000) {
@@ -140,6 +154,36 @@ export class SalesService {
     }
   }
 
+  /**
+   * Agrupa productos por vendedor (seller/admin)
+   * Busca en UserProduct para encontrar el dueño de cada producto
+   */
+  private async groupProductsBySeller(products: ProductSaleInput[]): Promise<Map<string, ProductSaleInput[]>> {
+    const grouped = new Map<string, ProductSaleInput[]>();
+
+    for (const product of products) {
+      // Buscar el dueño del producto en UserProduct
+      const userProduct = await this.userProductModel.findOne({ 
+        product_id: new Types.ObjectId(product.product_id) 
+      }).lean();
+
+      if (!userProduct) {
+        throw new Error(`Producto ${product.product_id} (${product.name}) no tiene vendedor asignado`);
+      }
+
+      const sellerId = userProduct.user_id.toString();
+
+      // Agrupar productos por vendedor
+      if (!grouped.has(sellerId)) {
+        grouped.set(sellerId, []);
+      }
+
+      grouped.get(sellerId)!.push(product);
+    }
+
+    console.log(`Productos agrupados en ${grouped.size} vendedor(es)`);
+    return grouped;
+  }
 
   private async validateProductStock(productId: string, quantity: number): Promise<void> {
     try {

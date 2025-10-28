@@ -84,14 +84,19 @@ async createSale(saleData: CreateSaleDto, userId: string): Promise<SalesDocument
         userSalesQuery.createdAt = dateQuery.createdAt;
       }
 
+      console.log('[getSalesByUser] Buscando en UserSales con query:', userSalesQuery);
+
       const userSales = await this.userSalesModel
         .find(userSalesQuery)
         .select('sales_id')
         .lean();
 
+      console.log('[getSalesByUser] Relaciones encontradas en UserSales:', userSales.length);
+
       const salesIds = userSales.map(us => us.sales_id);
 
       if (salesIds.length === 0) {
+        console.log('[getSalesByUser] No hay relaciones en UserSales para este usuario');
         // Return empty paginated result if user has no sales
         return {
           docs: [],
@@ -107,6 +112,8 @@ async createSale(saleData: CreateSaleDto, userId: string): Promise<SalesDocument
           offset: 0,
         } as PaginateResult<SalesDocument>;
       }
+
+      console.log('[getSalesByUser] IDs de ventas a buscar:', salesIds);
 
       // Build status query
       const statusQuery = filters?.status ? { status: filters.status } : {};
