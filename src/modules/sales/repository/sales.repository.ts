@@ -77,26 +77,54 @@ async createSale(saleData: CreateSaleDto, userId: string): Promise<SalesDocument
       }
     }
 
-    // Build status query
-    const statusQuery = filters?.status ? { status: filters.status } : {};
-
-    // Build search query
-    const searchQuery = filters?.search
-      ? {
-          $or: [
-            { 'products.name': { $regex: filters.search, $options: 'i' } },
-            { orderNumber: { $regex: filters.search, $options: 'i' } },
-          ],
-        }
-      : {};
-
     try {
-      // Get user's sales with pagination
-      // Note: No populate needed because products already have embedded data (name, price, image_url)
+      // First, get the user's sales IDs from UserSales table
+      const userSalesQuery: any = { user_id: userId };
+      if (dateQuery.createdAt) {
+        userSalesQuery.createdAt = dateQuery.createdAt;
+      }
+
+      const userSales = await this.userSalesModel
+        .find(userSalesQuery)
+        .select('sales_id')
+        .lean();
+
+      const salesIds = userSales.map(us => us.sales_id);
+
+      if (salesIds.length === 0) {
+        // Return empty paginated result if user has no sales
+        return {
+          docs: [],
+          totalDocs: 0,
+          limit,
+          page,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPrevPage: false,
+          nextPage: null,
+          prevPage: null,
+          pagingCounter: 1,
+          offset: 0,
+        } as PaginateResult<SalesDocument>;
+      }
+
+      // Build status query
+      const statusQuery = filters?.status ? { status: filters.status } : {};
+
+      // Build search query
+      const searchQuery = filters?.search
+        ? {
+            $or: [
+              { 'products.name': { $regex: filters.search, $options: 'i' } },
+              { orderNumber: { $regex: filters.search, $options: 'i' } },
+            ],
+          }
+        : {};
+
+      // Now get the actual sales with pagination
       const sales = await this.salesModel.paginate<SalesDocument>(
         { 
-          user_id: new mongoose.Types.ObjectId(userId),
-          ...dateQuery,
+          _id: { $in: salesIds },
           ...statusQuery,
           ...searchQuery
         },
