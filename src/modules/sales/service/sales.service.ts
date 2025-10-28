@@ -9,8 +9,6 @@ import { Sales, SalesStatus } from 'src/schemas/sales.schema';
 import { Kardex, KardexDocument } from 'src/schemas/kardex.schema';
 import { ProductKardex, ProductKardexDocument } from 'src/schemas/product_kardex.schema';
 import { UserProduct, UserProductDocument } from 'src/schemas/user_product.schema';
-import { Payment, PaymentDocument, PaymentMethod, PaymentStatus } from 'src/schemas/payment.schema';
-import { UserPayment, UserPaymentDocument } from 'src/schemas/user_payment.schema';
 import * as productInterface from '../../product/interfaces/product-service.interface';
 import { ProductInSale, SalesResponse } from 'src/type/sales';
 
@@ -37,9 +35,7 @@ export class SalesService {
     private readonly productService: productInterface.IProductService,
     @InjectModel(Kardex.name) private kardexModel: Model<KardexDocument>,
     @InjectModel(ProductKardex.name) private productKardexModel: Model<ProductKardexDocument>,
-    @InjectModel(UserProduct.name) private userProductModel: Model<UserProductDocument>,
-    @InjectModel(Payment.name) private paymentModel: Model<PaymentDocument>,
-    @InjectModel(UserPayment.name) private userPaymentModel: Model<UserPaymentDocument>
+    @InjectModel(UserProduct.name) private userProductModel: Model<UserProductDocument>
   ) {}
 
 
@@ -132,37 +128,14 @@ export class SalesService {
         )
       );
 
-      // 6. Crear el registro de Payment para el customer (comprador)
-      console.log('Creando registro de pago para el customer:', buyer_id);
-      
-      const paymentData = {
-        products: productDetails.map(p => ({
-          product_id: new Types.ObjectId(p.product_id),
-          price: p.price,
-          quantity: p.quantity
-        })),
-        total,
-        payment_method: PaymentMethod.BAMCOLOMBIA, // Puedes recibir esto como parámetro
-        status: PaymentStatus.COMPLETED
-      };
+      console.log(`✅ Transacción completada: ${createdSales.length} venta(s) creada(s) para ${createdSales.length} vendedor(es)`);
 
-      const newPayment = await this.paymentModel.create(paymentData);
-      console.log('Payment creado con ID:', newPayment._id);
-
-      // 7. Crear la relación UserPayment (customer ↔ payment)
-      await this.userPaymentModel.create({
-        user_id: new Types.ObjectId(buyer_id),
-        payment_id: newPayment._id
-      });
-      console.log('UserPayment creado para customer:', buyer_id);
-
-      console.log(`✅ Transacción completada: ${createdSales.length} venta(s) creada(s) + 1 pago registrado`);
-
-      // 8. Retornar la primera venta (o podrías retornar todas)
+      // 6. Retornar la primera venta (o podrías retornar todas)
       // Si hay múltiples vendedores, retorna la primera venta
+      // NOTA: El Payment ya fue creado por el frontend antes de llamar a este endpoint
       return {
         code: 201,
-        message: `Venta creada exitosamente. ${createdSales.length} venta(s) generada(s) para ${createdSales.length} vendedor(es). Pago registrado para el comprador.`,
+        message: `Venta creada exitosamente. ${createdSales.length} venta(s) generada(s) para ${createdSales.length} vendedor(es)`,
         data: createdSales[0]  // Retorna la primera venta
       };
     } catch (error) {
