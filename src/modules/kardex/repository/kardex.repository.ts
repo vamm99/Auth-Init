@@ -135,7 +135,13 @@ export class KardexRepository {
         product_id: { $in: productIds },
         ...dateQuery,
       })
-      .populate('product_id')
+      .populate({
+        path: 'product_id',
+        populate: {
+          path: 'category_id',
+          model: 'Category',
+        },
+      })
       .populate('kardex_id')
       .sort({ createdAt: -1 });
 

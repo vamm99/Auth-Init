@@ -92,6 +92,7 @@ async createSale(saleData: CreateSaleDto, userId: string): Promise<SalesDocument
 
     try {
       // Get user's sales with pagination
+      // Note: No populate needed because products already have embedded data (name, price, image_url)
       const sales = await this.salesModel.paginate<SalesDocument>(
         { 
           user_id: new mongoose.Types.ObjectId(userId),
@@ -103,10 +104,6 @@ async createSale(saleData: CreateSaleDto, userId: string): Promise<SalesDocument
           page,
           limit,
           populate: [
-            {
-              path: 'products.product_id',
-              select: 'name price image_url',
-            },
             {
               path: 'user_id',
               select: 'name email',
@@ -128,10 +125,6 @@ async createSale(saleData: CreateSaleDto, userId: string): Promise<SalesDocument
   async getSaleById(saleId: string): Promise<SalesDocument> {
     const sale = await this.salesModel
       .findById(saleId)
-      .populate({
-        path: 'products.product_id',
-        select: 'name description price image_url',
-      })
       .populate('user_id', 'name email')
       .lean()
       .exec();
@@ -159,10 +152,6 @@ async createSale(saleData: CreateSaleDto, userId: string): Promise<SalesDocument
         updateData,
         { new: true, runValidators: true },
       )
-      .populate({
-        path: 'products.product_id',
-        select: 'name price image_url',
-      })
       .populate('user_id', 'name email')
       .lean()
       .exec();
