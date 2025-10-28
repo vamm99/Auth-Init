@@ -69,7 +69,14 @@ export class PaymentService {
   async getUserPayments(user_id: string) {
     const userPayments = await this.userPaymentModel
       .find({ user_id })
-      .populate('payment_id')
+      .populate({
+        path: 'payment_id',
+        populate: {
+          path: 'products.product_id',
+          model: 'Product',
+          select: 'name price image_url'
+        }
+      })
       .sort({ createdAt: -1 })
       .exec();
 
