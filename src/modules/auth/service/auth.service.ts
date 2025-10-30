@@ -11,6 +11,7 @@ import { NodemailerService, EmailProps} from 'src/util/email/nodemailer.service'
 import { ConfigService } from '@nestjs/config';
 import { WelcomeTemplate } from 'src/util/template/welcome.templete';
 import { UpdatePasswordTemplate } from 'src/util/template/updatePassword.template';
+import { SellerWelcomeTemplate } from 'src/util/template/sellerWelcome.template';
 
 @Injectable()
 export class AuthService {
@@ -148,6 +149,39 @@ export class AuthService {
             code: 200,
             message: 'Profile updated successfully',
             data: updatedUser
+        }
+    }
+
+    async registerSeller(user: RegisterDto): Promise<ApiResponse<RegisterDto>>{
+        const existingUser = await this.authRepository.getUserByEmail(user.email)
+        if (existingUser) {
+            throw new ConflictException('User already exists')
+        }
+
+        const hashedPassword = await this.bcryptService.hashPassword(user.password)
+        user.password = hashedPassword
+        user.role = 'seller'
+
+        const newUser = await this.authRepository.register(user)
+        if (!newUser) {
+            throw new InternalServerErrorException('User registration failed')
+        }
+
+        const adminLink = 'https://moterplace-sim9.vercel.app/login'
+
+        const emailData: EmailProps = {
+            from: this.configService.get<string>('NODEMAILER_USER')!,
+            to: user.email,
+            subject: 'Bienvenido a MonterPlace - Acceso de Vendedor',
+            html: SellerWelcomeTemplate(user.name, adminLink),
+        }
+
+        await this.nodemailerService.sendEmail(emailData)
+
+        return {
+            code: 201,
+            message: 'Seller registered successfully. Please check your email to access the admin panel.',
+            data: newUser
         }
     }
 }

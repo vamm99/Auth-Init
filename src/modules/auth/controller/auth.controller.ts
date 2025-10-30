@@ -18,6 +18,12 @@ export class AuthController {
   }
 
   @Public()
+  @Post('register-seller')
+  async registerSeller(@Body() user:RegisterDto){
+    return this.authService.registerSeller(user)
+  }
+
+  @Public()
   @Post('login')
   async login(@Body() user:LoginDto){
     return this.authService.login(user)
